@@ -5,6 +5,12 @@ const fs = require('fs');
 const path = require('path');
 const denodeify = require('denodeify');
 const rimraf = denodeify(require('rimraf'));
+const access = denodeify(fs.access);
+const rename = denodeify(fs.rename);
+const unlink = denodeify(fs.unlink);
+const stat = denodeify(fs.stat);
+const readdir = denodeify(fs.readdir);
+const rmdir = denodeify(fs.rmdir);
 
 const _move = co.wrap(function* move(src, dest, options = {}) {
   let {
@@ -15,7 +21,7 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
   let destExists;
 
   try {
-    fs.accessSync(dest);
+    yield access(dest);
 
     destExists = true;
   } catch (err) {
@@ -27,7 +33,7 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
   }
 
   if (!overwrite && !merge) {
-    fs.renameSync(src, dest);
+    yield rename(src, dest);
 
     return;
   }
@@ -37,26 +43,26 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
       yield rimraf(dest);
     }
 
-    fs.renameSync(src, dest);
+    yield rename(src, dest);
 
     return;
   }
 
   if (!overwrite && merge) {
     if (!destExists) {
-      fs.renameSync(src, dest);
+      yield rename(src, dest);
 
       return;
     }
 
-    let stat = fs.statSync(dest);
-    if (stat.isFile()) {
-      fs.unlinkSync(src);
+    let _stat = yield stat(dest);
+    if (_stat.isFile()) {
+      yield unlink(src);
 
       return;
     }
 
-    let files = fs.readdirSync(src);
+    let files = yield readdir(src);
     for (let file of files) {
       yield _move(
         path.join(src, file),
@@ -65,26 +71,26 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
       );
     }
 
-    fs.rmdirSync(src);
+    yield rmdir(src);
   }
 
   if (overwrite && merge) {
     if (!destExists) {
-      fs.renameSync(src, dest);
+      yield rename(src, dest);
 
       return;
     }
 
-    let stat = fs.statSync(dest);
-    if (stat.isFile()) {
+    let _stat = yield stat(dest);
+    if (_stat.isFile()) {
       yield rimraf(dest);
 
-      fs.renameSync(src, dest);
+      yield rename(src, dest);
 
       return;
     }
 
-    let files = fs.readdirSync(src);
+    let files = yield readdir(src);
     for (let file of files) {
       yield _move(
         path.join(src, file),
@@ -93,7 +99,7 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
       );
     }
 
-    fs.rmdirSync(src);
+    yield rmdir(src);
   }
 });
 
