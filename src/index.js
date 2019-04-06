@@ -52,7 +52,7 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
 
   if ((yield stat(dest)).isFile()) {
     if (overwrite) {
-      yield rimraf(dest);
+      yield unlink(dest);
 
       yield rename(src, dest);
     } else {
