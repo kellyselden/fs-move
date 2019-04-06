@@ -48,7 +48,7 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
     return;
   }
 
-  if (!overwrite && merge) {
+  if (merge) {
     if (!destExists) {
       yield rename(src, dest);
 
@@ -57,35 +57,13 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
 
     let _stat = yield stat(dest);
     if (_stat.isFile()) {
-      yield unlink(src);
+      if (overwrite) {
+        yield rimraf(dest);
 
-      return;
-    }
-
-    let files = yield readdir(src);
-    for (let file of files) {
-      yield _move(
-        path.join(src, file),
-        path.join(dest, file),
-        options
-      );
-    }
-
-    yield rmdir(src);
-  }
-
-  if (overwrite && merge) {
-    if (!destExists) {
-      yield rename(src, dest);
-
-      return;
-    }
-
-    let _stat = yield stat(dest);
-    if (_stat.isFile()) {
-      yield rimraf(dest);
-
-      yield rename(src, dest);
+        yield rename(src, dest);
+      } else {
+        yield unlink(src);
+      }
 
       return;
     }
