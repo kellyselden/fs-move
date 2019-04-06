@@ -18,33 +18,23 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
     merge
   } = options;
 
-  let destExists;
-
   try {
     yield access(dest);
-
-    destExists = true;
   } catch (err) {
-    // do nothing
-  }
-
-  if (destExists && !overwrite && !merge) {
-    throw new Error('Destination directory already exists');
-  }
-
-  if (!merge) {
-    if (overwrite) {
-      if (destExists) {
-        yield rimraf(dest);
-      }
-    }
-
     yield rename(src, dest);
 
     return;
   }
 
-  if (!destExists) {
+  if (!overwrite && !merge) {
+    throw new Error('Destination directory already exists');
+  }
+
+  if (!merge) {
+    if (overwrite) {
+      yield rimraf(dest);
+    }
+
     yield rename(src, dest);
 
     return;
