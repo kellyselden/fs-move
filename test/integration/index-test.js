@@ -1,96 +1,236 @@
 'use strict';
 
 const { describe } = require('../helpers/mocha');
-const { expect, dir } = require('../helpers/chai');
+const { expect } = require('../helpers/chai');
 const fs = require('fs');
 const path = require('path');
 const co = require('co');
 const denodeify = require('denodeify');
 const tmpDir = denodeify(require('tmp').dir);
 const cpr = denodeify(require('cpr'));
-const fixturify = require('fixturify');
+const rmdir = denodeify(fs.rmdir);
+const writeFile = denodeify(fs.writeFile);
+const _symlink = denodeify(fs.symlink);
+const unlink = denodeify(fs.unlink);
+const _fixturify = require('fixturify');
 const move = require('../../src');
 
 const fixturesPath = path.resolve(__dirname, '../fixtures');
 
+const copy = co.wrap(function*(src, dest) {
+  try {
+    yield cpr(src, dest);
+  } catch (err) {
+    yield rmdir(dest);
+  }
+});
+
+const symlink = co.wrap(function*(dir) {
+  yield writeFile(path.join(dir, 'symlink-src.txt'), '');
+
+  yield _symlink(
+    path.normalize('./symlink-src.txt'),
+    path.join(dir, 'symlink-dest.txt')
+  );
+});
+
+const breakSymlink = co.wrap(function*(dir) {
+  yield unlink(path.join(dir, 'symlink-src.txt'));
+});
+
+const fixturify = co.wrap(function*(dir) {
+  let obj;
+  try {
+    obj = _fixturify.readSync(dir);
+  } catch (err) {
+    obj = null;
+  }
+  return yield Promise.resolve(obj);
+});
+
 describe(function() {
-  let srcTmpDir;
-  let destTmpDir;
+  let actualSrcTmpDir;
+  let actualDestTmpDir;
+  let expectedSrcTmpDir;
+  let expectedDestTmpDir;
 
   beforeEach(co.wrap(function*() {
-    srcTmpDir = yield tmpDir();
-    destTmpDir = yield tmpDir();
+    actualSrcTmpDir = yield tmpDir();
+    actualDestTmpDir = yield tmpDir();
+    expectedSrcTmpDir = yield tmpDir();
+    expectedDestTmpDir = yield tmpDir();
   }));
 
-  let test = co.wrap(function*(fixturesDir, options) {
+  let setUp = co.wrap(function*(fixturesDir) {
     fixturesDir = path.join(fixturesPath, fixturesDir);
 
-    yield cpr(path.join(fixturesDir, 'initial/src'), srcTmpDir);
-    try {
-      yield cpr(path.join(fixturesDir, 'initial/dest'), destTmpDir);
-    } catch (err) {
-      // do nothing
-    }
+    yield copy(path.join(fixturesDir, 'initial/src'), actualSrcTmpDir);
+    yield copy(path.join(fixturesDir, 'initial/dest'), actualDestTmpDir);
+    yield copy(path.join(fixturesDir, 'expected/src'), expectedSrcTmpDir);
+    yield copy(path.join(fixturesDir, 'expected/dest'), expectedDestTmpDir);
+  });
 
-    let err;
-    try {
-      yield move(srcTmpDir, destTmpDir, options);
-    } catch (_err) {
-      err = _err;
-    }
+  let test = co.wrap(function*(options) {
+    yield move(actualSrcTmpDir, actualDestTmpDir, options);
+  });
 
-    let expectedSrc;
-    try {
-      expectedSrc = fixturify.readSync(path.join(fixturesDir, 'expected/src'));
-    } catch (err) {
-      expectedSrc = null;
-    }
-    let expectedDest = fixturify.readSync(path.join(fixturesDir, 'expected/dest'));
-    let actualSrc;
-    try {
-      actualSrc = fixturify.readSync(srcTmpDir);
-    } catch (err) {
-      actualSrc = null;
-    }
-    let actualDest = fixturify.readSync(destTmpDir);
+  let assert = co.wrap(function*() {
+    let expectedSrc = yield fixturify(expectedSrcTmpDir);
+    let expectedDest = yield fixturify(expectedDestTmpDir);
+    let actualSrc = yield fixturify(actualSrcTmpDir);
+    let actualDest = yield fixturify(actualDestTmpDir);
 
     expect(actualSrc).to.deep.equal(expectedSrc);
     expect(actualDest).to.deep.equal(expectedDest);
-
-    if (err) {
-      throw err;
-    }
-
-    expect(dir(srcTmpDir)).to.not.exist;
   });
 
-  it('overwrite', co.wrap(function*() {
-    yield test('overwrite', {
-      overwrite: true
-    });
+  it('dest-exists-error', co.wrap(function*() {
+    yield setUp('dest-exists-error');
+
+    yield expect(test())
+      .to.eventually.be.rejectedWith('Destination directory already exists');
+
+    yield assert();
   }));
 
   it('dest-does-not-exist', co.wrap(function*() {
-    fs.rmdirSync(destTmpDir);
+    yield setUp('dest-does-not-exist');
 
-    yield test('dest-does-not-exist');
+    yield test();
+
+    yield assert();
+  }));
+
+  it('overwrite', co.wrap(function*() {
+    yield setUp('overwrite');
+
+    yield test({
+      overwrite: true
+    });
+
+    yield assert();
   }));
 
   it('merge', co.wrap(function*() {
-    yield test('merge', {
+    yield setUp('merge');
+
+    yield test({
       merge: true
     });
+
+    yield assert();
   }));
 
   it('merge-and-overwrite', co.wrap(function*() {
-    yield test('merge-and-overwrite', {
+    yield setUp('merge-and-overwrite');
+
+    yield test({
       merge: true,
       overwrite: true
     });
+
+    yield assert();
   }));
 
-  it('dest-exists-error', co.wrap(function*() {
-    yield expect(test('dest-exists-error'))
-      .to.eventually.be.rejectedWith('Destination directory already exists');
-  }));
+  describe('symlink', function() {
+    it('overwrite', co.wrap(function*() {
+      yield setUp('overwrite');
+
+      yield symlink(actualSrcTmpDir);
+
+      yield test({
+        overwrite: true
+      });
+
+      yield symlink(expectedDestTmpDir);
+
+      yield assert();
+    }));
+
+    it('merge', co.wrap(function*() {
+      yield setUp('merge');
+
+      yield symlink(actualSrcTmpDir);
+
+      yield test({
+        merge: true
+      });
+
+      yield symlink(expectedDestTmpDir);
+
+      yield assert();
+    }));
+
+    it('merge-and-overwrite', co.wrap(function*() {
+      yield setUp('merge-and-overwrite');
+
+      yield symlink(actualSrcTmpDir);
+
+      yield test({
+        merge: true,
+        overwrite: true
+      });
+
+      yield symlink(expectedDestTmpDir);
+
+      yield assert();
+    }));
+  });
+
+  describe('broken symlink', function() {
+    it('overwrite', co.wrap(function*() {
+      yield setUp('overwrite');
+
+      yield symlink(actualSrcTmpDir);
+
+      yield breakSymlink(actualSrcTmpDir);
+
+      yield test({
+        overwrite: true
+      });
+
+      yield symlink(expectedDestTmpDir);
+
+      yield breakSymlink(expectedDestTmpDir);
+
+      yield assert();
+    }));
+
+    it('merge', co.wrap(function*() {
+      yield setUp('merge');
+
+      yield symlink(actualSrcTmpDir);
+
+      yield breakSymlink(actualSrcTmpDir);
+
+      yield test({
+        merge: true
+      });
+
+      yield symlink(expectedDestTmpDir);
+
+      yield breakSymlink(expectedDestTmpDir);
+
+      yield assert();
+    }));
+
+    it('merge-and-overwrite', co.wrap(function*() {
+      yield setUp('merge-and-overwrite');
+
+      yield symlink(actualSrcTmpDir);
+
+      yield breakSymlink(actualSrcTmpDir);
+
+      yield test({
+        merge: true,
+        overwrite: true
+      });
+
+      yield symlink(expectedDestTmpDir);
+
+      yield breakSymlink(expectedDestTmpDir);
+
+      yield assert();
+    }));
+  });
 });
