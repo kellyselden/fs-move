@@ -5,7 +5,6 @@ const fs = require('fs');
 const path = require('path');
 const denodeify = require('denodeify');
 const rimraf = denodeify(require('rimraf'));
-const access = denodeify(fs.access);
 const rename = denodeify(fs.rename);
 const unlink = denodeify(fs.unlink);
 const stat = denodeify(fs.stat);
@@ -18,8 +17,10 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
     merge
   } = options;
 
+  let stats;
+
   try {
-    yield access(dest);
+    stats = yield stat(dest);
   } catch (err) {
     yield rename(src, dest);
 
@@ -40,7 +41,7 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
     return;
   }
 
-  if ((yield stat(dest)).isFile()) {
+  if (stats.isFile()) {
     if (overwrite) {
       yield unlink(dest);
 
