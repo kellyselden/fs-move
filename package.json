@@ -1,0 +1,54 @@
+{
+  "name": "fs-move",
+  "version": "0.0.0",
+  "description": "Move directory with options",
+  "main": "src/index.js",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "test": "mocha --recursive"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/kellyselden/fs-move.git"
+  },
+  "keywords": [
+    "merge",
+    "overwrite",
+    "dir",
+    "file",
+    "copy"
+  ],
+  "author": "Kelly Selden",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kellyselden/fs-move/issues"
+  },
+  "homepage": "https://github.com/kellyselden/fs-move#readme",
+  "engines": {
+    "node": ">=6"
+  },
+  "dependencies": {
+    "co": "^4.6.0",
+    "denodeify": "^1.2.1",
+    "rimraf": "^2.6.3"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "chai-files": "^1.4.0",
+    "cpr": "^3.0.1",
+    "eslint": "^5.16.0",
+    "eslint-config-sane": "0.7.0",
+    "eslint-plugin-mocha": "^5.3.0",
+    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-prefer-let": "^1.0.1",
+    "fixturify": "^1.2.0",
+    "mocha": "^6.0.2",
+    "mocha-helpers": "^1.2.1",
+    "renovate-config-standard": "^2.0.0",
+    "tmp": "0.1.0"
+  }
+}
