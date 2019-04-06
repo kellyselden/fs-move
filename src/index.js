@@ -32,53 +32,45 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
     throw new Error('Destination directory already exists');
   }
 
-  if (!overwrite && !merge) {
-    yield rename(src, dest);
-
-    return;
-  }
-
-  if (overwrite && !merge) {
-    if (destExists) {
-      yield rimraf(dest);
-    }
-
-    yield rename(src, dest);
-
-    return;
-  }
-
-  if (merge) {
-    if (!destExists) {
-      yield rename(src, dest);
-
-      return;
-    }
-
-    let _stat = yield stat(dest);
-    if (_stat.isFile()) {
-      if (overwrite) {
+  if (!merge) {
+    if (overwrite) {
+      if (destExists) {
         yield rimraf(dest);
-
-        yield rename(src, dest);
-      } else {
-        yield unlink(src);
       }
-
-      return;
     }
 
-    let files = yield readdir(src);
-    for (let file of files) {
-      yield _move(
-        path.join(src, file),
-        path.join(dest, file),
-        options
-      );
-    }
+    yield rename(src, dest);
 
-    yield rmdir(src);
+    return;
   }
+
+  if (!destExists) {
+    yield rename(src, dest);
+
+    return;
+  }
+
+  if ((yield stat(dest)).isFile()) {
+    if (overwrite) {
+      yield rimraf(dest);
+
+      yield rename(src, dest);
+    } else {
+      yield unlink(src);
+    }
+
+    return;
+  }
+
+  for (let file of yield readdir(src)) {
+    yield _move(
+      path.join(src, file),
+      path.join(dest, file),
+      options
+    );
+  }
+
+  yield rmdir(src);
 });
 
 module.exports = _move;
