@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "co": "^4.6.0",
+    "cpr": "^3.0.1",
     "denodeify": "^1.2.1",
     "rimraf": "^2.6.3"
   },
@@ -47,6 +48,7 @@
     "mocha": "^6.0.2",
     "mocha-helpers": "^1.2.1",
     "renovate-config-standard": "^2.0.0",
+    "sinon": "^7.3.1",
     "tmp": "0.1.0"
   }
 }

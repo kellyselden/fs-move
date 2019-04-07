@@ -12,6 +12,7 @@ const writeFile = denodeify(fs.writeFile);
 const _symlink = denodeify(fs.symlink);
 const unlink = denodeify(fs.unlink);
 const fixturify = require('fixturify');
+const sinon = require('sinon');
 const fixtures = require('./fixtures');
 const move = require('../src');
 
@@ -47,12 +48,15 @@ const fixturifyRead = co.wrap(function*(dir) {
 });
 
 describe(function() {
+  let sandbox;
   let actualSrcTmpDir;
   let actualDestTmpDir;
   let expectedSrcTmpDir;
   let expectedDestTmpDir;
 
   beforeEach(co.wrap(function*() {
+    sandbox = sinon.createSandbox();
+
     actualSrcTmpDir = yield tmpDir();
     actualDestTmpDir = yield tmpDir();
     expectedSrcTmpDir = yield tmpDir();
@@ -80,6 +84,10 @@ describe(function() {
 
     expect(actualSrc).to.deep.equal(expectedSrc);
     expect(actualDest).to.deep.equal(expectedDest);
+  });
+
+  afterEach(function() {
+    sandbox.restore();
   });
 
   it('dest-exists', co.wrap(function*() {
@@ -156,14 +164,12 @@ describe(function() {
     describe(name, function() {
       for (let {
         name: _name,
-        beforeTest,
-        afterTest
+        beforeTest = () => Promise.resolve(),
+        afterTest = () => Promise.resolve()
       } of
         [
           {
-            name: 'default',
-            beforeTest: () => Promise.resolve(),
-            afterTest: () => Promise.resolve()
+            name: 'default'
           },
           {
             name: 'symlink',
@@ -186,6 +192,14 @@ describe(function() {
 
               yield breakSymlink(expectedDestTmpDir);
             })
+          },
+          {
+            name: 'broken rename',
+            beforeTest() {
+              sandbox.stub(fs, 'rename').callsArgWith(2, { code: 'EXDEV' });
+
+              return Promise.resolve();
+            }
           }
         ]
       ) {
