@@ -20,6 +20,7 @@ const _move = co.wrap(function* move(src, dest, options = {}, callback) {
     let {
       overwrite,
       merge,
+      purge,
       filter = () => true
     } = options;
 
@@ -77,10 +78,14 @@ const _move = co.wrap(function* move(src, dest, options = {}, callback) {
 
     // post
 
-    try {
-      yield rmdir(src);
-    } catch (err) {
-      // do nothing
+    if (purge) {
+      yield rimraf(src);
+    } else {
+      try {
+        yield rmdir(src);
+      } catch (err) {
+        // do nothing
+      }
     }
 
     if (callback) {

@@ -197,6 +197,38 @@
       }
     }
   },
+  "merge-and-purge": {
+    "expected": {
+      "dest": {
+        "folder": {
+          "both.txt": "folder file from dest",
+          "dest.txt": "folder file from dest",
+          "src.txt": "folder file from src"
+        },
+        "both.txt": "file from dest",
+        "dest.txt": "file from dest",
+        "src.txt": "file from src"
+      }
+    },
+    "initial": {
+      "dest": {
+        "folder": {
+          "both.txt": "folder file from dest",
+          "dest.txt": "folder file from dest"
+        },
+        "both.txt": "file from dest",
+        "dest.txt": "file from dest"
+      },
+      "src": {
+        "folder": {
+          "both.txt": "folder file from src",
+          "src.txt": "folder file from src"
+        },
+        "both.txt": "file from src",
+        "src.txt": "file from src"
+      }
+    }
+  },
   "file-to-folder-overwrite": {
     "expected": {
       "dest": {
@@ -300,6 +332,42 @@
         "both.txt": {
           "src.txt": "folder file from src"
         }
+      }
+    },
+    "initial": {
+      "dest": {
+        "both.txt": "file from dest"
+      },
+      "src": {
+        "both.txt": {
+          "src.txt": "folder file from src"
+        }
+      }
+    }
+  },
+  "file-to-folder-merge-and-purge": {
+    "expected": {
+      "dest": {
+        "both.txt": {
+          "dest.txt": "folder file from dest"
+        }
+      }
+    },
+    "initial": {
+      "dest": {
+        "both.txt": {
+          "dest.txt": "folder file from dest"
+        }
+      },
+      "src": {
+        "both.txt": "file from src"
+      }
+    }
+  },
+  "folder-to-file-merge-and-purge": {
+    "expected": {
+      "dest": {
+        "both.txt": "file from dest"
       }
     },
     "initial": {

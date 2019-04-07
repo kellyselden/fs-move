@@ -176,6 +176,17 @@ describe(function() {
               'file-to-folder-merge-and-overwrite',
               'folder-to-file-merge-and-overwrite'
             ]
+          },
+          {
+            name: 'merge-and-purge',
+            options: {
+              merge: true,
+              purge: true
+            },
+            fixtures: [
+              'file-to-folder-merge-and-purge',
+              'folder-to-file-merge-and-purge'
+            ]
           }
         ]
       ) {
