@@ -6,7 +6,6 @@ const path = require('path');
 const denodeify = require('denodeify');
 const rimraf = denodeify(require('rimraf'));
 const rename = denodeify(fs.rename);
-const unlink = denodeify(fs.unlink);
 const stat = denodeify(fs.stat);
 const readdir = denodeify(fs.readdir);
 const rmdir = denodeify(fs.rmdir);
