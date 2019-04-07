@@ -11,7 +11,10 @@ const move = require('fs-move');
 (async () => {
   await move(src, dest, {
     merge: true,
-    overwrite: true
+    overwrite: true,
+    filter(src, dest) {
+      return true;
+    }
   });
 })();
 ```
