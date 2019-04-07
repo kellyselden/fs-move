@@ -11,13 +11,13 @@ const rmdir = denodeify(fs.rmdir);
 const writeFile = denodeify(fs.writeFile);
 const _symlink = denodeify(fs.symlink);
 const unlink = denodeify(fs.unlink);
-const _fixturify = require('fixturify');
+const fixturify = require('fixturify');
 const fixtures = require('./fixtures');
 const move = require('../src');
 
 const fixturifyWrite = co.wrap(function*(src, dest) {
   if (src) {
-    _fixturify.writeSync(dest, src);
+    fixturify.writeSync(dest, src);
   } else {
     yield rmdir(dest);
   }
@@ -39,7 +39,7 @@ const breakSymlink = co.wrap(function*(dir) {
 const fixturifyRead = co.wrap(function*(dir) {
   let obj;
   try {
-    obj = _fixturify.readSync(dir);
+    obj = fixturify.readSync(dir);
   } catch (err) {
     obj = null;
   }
