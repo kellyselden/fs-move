@@ -1,0 +1,156 @@
+{
+  "dest-does-not-exist": {
+    "expected": {
+      "dest": {
+        "folder": {
+          "both.txt": "folder file from src",
+          "src.txt": "folder file from src"
+        },
+        "both.txt": "file from src",
+        "src.txt": "file from src"
+      }
+    },
+    "initial": {
+      "src": {
+        "folder": {
+          "both.txt": "folder file from src",
+          "src.txt": "folder file from src"
+        },
+        "both.txt": "file from src",
+        "src.txt": "file from src"
+      }
+    }
+  },
+  "dest-exists": {
+    "expected": {
+      "dest": {
+        "folder": {
+          "both.txt": "folder file from dest",
+          "dest.txt": "folder file from dest"
+        },
+        "both.txt": "file from dest",
+        "dest.txt": "file from dest"
+      },
+      "src": {
+        "folder": {
+          "both.txt": "folder file from src",
+          "src.txt": "folder file from src"
+        },
+        "both.txt": "file from src",
+        "src.txt": "file from src"
+      }
+    },
+    "initial": {
+      "dest": {
+        "folder": {
+          "both.txt": "folder file from dest",
+          "dest.txt": "folder file from dest"
+        },
+        "both.txt": "file from dest",
+        "dest.txt": "file from dest"
+      },
+      "src": {
+        "folder": {
+          "both.txt": "folder file from src",
+          "src.txt": "folder file from src"
+        },
+        "both.txt": "file from src",
+        "src.txt": "file from src"
+      }
+    }
+  },
+  "merge": {
+    "expected": {
+      "dest": {
+        "folder": {
+          "both.txt": "folder file from dest",
+          "dest.txt": "folder file from dest",
+          "src.txt": "folder file from src"
+        },
+        "both.txt": "file from dest",
+        "dest.txt": "file from dest",
+        "src.txt": "file from src"
+      }
+    },
+    "initial": {
+      "dest": {
+        "folder": {
+          "both.txt": "folder file from dest",
+          "dest.txt": "folder file from dest"
+        },
+        "both.txt": "file from dest",
+        "dest.txt": "file from dest"
+      },
+      "src": {
+        "folder": {
+          "both.txt": "folder file from src",
+          "src.txt": "folder file from src"
+        },
+        "both.txt": "file from src",
+        "src.txt": "file from src"
+      }
+    }
+  },
+  "merge-and-overwrite": {
+    "expected": {
+      "dest": {
+        "folder": {
+          "both.txt": "folder file from src",
+          "dest.txt": "folder file from dest",
+          "src.txt": "folder file from src"
+        },
+        "both.txt": "file from src",
+        "dest.txt": "file from dest",
+        "src.txt": "file from src"
+      }
+    },
+    "initial": {
+      "dest": {
+        "folder": {
+          "both.txt": "folder file from dest",
+          "dest.txt": "folder file from dest"
+        },
+        "both.txt": "file from dest",
+        "dest.txt": "file from dest"
+      },
+      "src": {
+        "folder": {
+          "both.txt": "folder file from src",
+          "src.txt": "folder file from src"
+        },
+        "both.txt": "file from src",
+        "src.txt": "file from src"
+      }
+    }
+  },
+  "overwrite": {
+    "expected": {
+      "dest": {
+        "folder": {
+          "both.txt": "folder file from src",
+          "src.txt": "folder file from src"
+        },
+        "both.txt": "file from src",
+        "src.txt": "file from src"
+      }
+    },
+    "initial": {
+      "dest": {
+        "folder": {
+          "both.txt": "folder file from dest",
+          "dest.txt": "folder file from dest"
+        },
+        "both.txt": "file from dest",
+        "dest.txt": "file from dest"
+      },
+      "src": {
+        "folder": {
+          "both.txt": "folder file from src",
+          "src.txt": "folder file from src"
+        },
+        "both.txt": "file from src",
+        "src.txt": "file from src"
+      }
+    }
+  }
+}

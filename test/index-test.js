@@ -1,26 +1,24 @@
 'use strict';
 
-const { describe } = require('../helpers/mocha');
-const { expect } = require('../helpers/chai');
+const { describe } = require('./helpers/mocha');
+const { expect } = require('./helpers/chai');
 const fs = require('fs');
 const path = require('path');
 const co = require('co');
 const denodeify = require('denodeify');
 const tmpDir = denodeify(require('tmp').dir);
-const cpr = denodeify(require('cpr'));
 const rmdir = denodeify(fs.rmdir);
 const writeFile = denodeify(fs.writeFile);
 const _symlink = denodeify(fs.symlink);
 const unlink = denodeify(fs.unlink);
 const _fixturify = require('fixturify');
-const move = require('../../src');
+const fixtures = require('./fixtures');
+const move = require('../src');
 
-const fixturesPath = path.resolve(__dirname, '../fixtures');
-
-const copy = co.wrap(function*(src, dest) {
-  try {
-    yield cpr(src, dest);
-  } catch (err) {
+const fixturifyWrite = co.wrap(function*(src, dest) {
+  if (src) {
+    _fixturify.writeSync(dest, src);
+  } else {
     yield rmdir(dest);
   }
 });
@@ -38,7 +36,7 @@ const breakSymlink = co.wrap(function*(dir) {
   yield unlink(path.join(dir, 'symlink-src.txt'));
 });
 
-const fixturify = co.wrap(function*(dir) {
+const fixturifyRead = co.wrap(function*(dir) {
   let obj;
   try {
     obj = _fixturify.readSync(dir);
@@ -62,12 +60,12 @@ describe(function() {
   }));
 
   let setUp = co.wrap(function*(fixturesDir) {
-    fixturesDir = path.join(fixturesPath, fixturesDir);
+    fixturesDir = fixtures[fixturesDir];
 
-    yield copy(path.join(fixturesDir, 'initial/src'), actualSrcTmpDir);
-    yield copy(path.join(fixturesDir, 'initial/dest'), actualDestTmpDir);
-    yield copy(path.join(fixturesDir, 'expected/src'), expectedSrcTmpDir);
-    yield copy(path.join(fixturesDir, 'expected/dest'), expectedDestTmpDir);
+    yield fixturifyWrite(fixturesDir['initial']['src'], actualSrcTmpDir);
+    yield fixturifyWrite(fixturesDir['initial']['dest'], actualDestTmpDir);
+    yield fixturifyWrite(fixturesDir['expected']['src'], expectedSrcTmpDir);
+    yield fixturifyWrite(fixturesDir['expected']['dest'], expectedDestTmpDir);
   });
 
   let test = co.wrap(function*(options) {
@@ -75,17 +73,17 @@ describe(function() {
   });
 
   let assert = co.wrap(function*() {
-    let expectedSrc = yield fixturify(expectedSrcTmpDir);
-    let expectedDest = yield fixturify(expectedDestTmpDir);
-    let actualSrc = yield fixturify(actualSrcTmpDir);
-    let actualDest = yield fixturify(actualDestTmpDir);
+    let expectedSrc = yield fixturifyRead(expectedSrcTmpDir);
+    let expectedDest = yield fixturifyRead(expectedDestTmpDir);
+    let actualSrc = yield fixturifyRead(actualSrcTmpDir);
+    let actualDest = yield fixturifyRead(actualDestTmpDir);
 
     expect(actualSrc).to.deep.equal(expectedSrc);
     expect(actualDest).to.deep.equal(expectedDest);
   });
 
-  it('dest-exists-error', co.wrap(function*() {
-    yield setUp('dest-exists-error');
+  it('dest-exists', co.wrap(function*() {
+    yield setUp('dest-exists');
 
     yield expect(test())
       .to.eventually.be.rejectedWith('Destination directory already exists');
