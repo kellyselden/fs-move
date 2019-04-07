@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const denodeify = require('denodeify');
 const rimraf = denodeify(require('rimraf'));
-const rename = denodeify(fs.rename);
+const cpr = denodeify(require('cpr'));
 const lstat = denodeify(fs.lstat);
 const readdir = denodeify(fs.readdir);
 const rmdir = denodeify(fs.rmdir);
@@ -48,7 +48,15 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
   // during
 
   if (!destStats) {
-    yield rename(src, dest);
+    try {
+      yield denodeify(fs.rename)(src, dest);
+    } catch (err) {
+      if (err.code === 'EXDEV') {
+        yield cpr(src, dest);
+
+        yield rimraf(src);
+      }
+    }
   }
 
   if (merge && areBothDirs) {
