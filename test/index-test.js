@@ -139,6 +139,54 @@ describe(function() {
     ]
   ) {
     describe(name, function() {
+      for (let {
+        name: _name,
+        beforeTest,
+        afterTest
+      } of
+        [
+          {
+            name: 'default',
+            beforeTest: () => Promise.resolve(),
+            afterTest: () => Promise.resolve()
+          },
+          {
+            name: 'symlink',
+            beforeTest: co.wrap(function*() {
+              yield symlink(actualSrcTmpDir);
+            }),
+            afterTest: co.wrap(function*() {
+              yield symlink(expectedDestTmpDir);
+            })
+          },
+          {
+            name: 'broken symlink',
+            beforeTest: co.wrap(function*() {
+              yield symlink(actualSrcTmpDir);
+
+              yield breakSymlink(actualSrcTmpDir);
+            }),
+            afterTest: co.wrap(function*() {
+              yield symlink(expectedDestTmpDir);
+
+              yield breakSymlink(expectedDestTmpDir);
+            })
+          }
+        ]
+      ) {
+        it(_name, co.wrap(function*() {
+          yield setUp(name);
+
+          yield beforeTest();
+
+          yield test(options);
+
+          yield afterTest();
+
+          yield assert();
+        }));
+      }
+
       for (let fixturesDir of fixtures) {
         it(fixturesDir, co.wrap(function*() {
           yield setUp(fixturesDir);
@@ -148,87 +196,6 @@ describe(function() {
           yield assert();
         }));
       }
-    });
-  }
-
-  for (let {
-    name,
-    beforeTest,
-    afterTest
-  } of
-    [
-      {
-        name: 'default',
-        beforeTest: () => Promise.resolve(),
-        afterTest: () => Promise.resolve()
-      },
-      {
-        name: 'symlink',
-        beforeTest: co.wrap(function*() {
-          yield symlink(actualSrcTmpDir);
-        }),
-        afterTest: co.wrap(function*() {
-          yield symlink(expectedDestTmpDir);
-        })
-      },
-      {
-        name: 'broken symlink',
-        beforeTest: co.wrap(function*() {
-          yield symlink(actualSrcTmpDir);
-
-          yield breakSymlink(actualSrcTmpDir);
-        }),
-        afterTest: co.wrap(function*() {
-          yield symlink(expectedDestTmpDir);
-
-          yield breakSymlink(expectedDestTmpDir);
-        })
-      }
-    ]
-  ) {
-    describe(name, function() {
-      it('overwrite', co.wrap(function*() {
-        yield setUp('overwrite');
-
-        yield beforeTest();
-
-        yield test({
-          overwrite: true
-        });
-
-        yield afterTest();
-
-        yield assert();
-      }));
-
-      it('merge', co.wrap(function*() {
-        yield setUp('merge');
-
-        yield beforeTest();
-
-        yield test({
-          merge: true
-        });
-
-        yield afterTest();
-
-        yield assert();
-      }));
-
-      it('merge-and-overwrite', co.wrap(function*() {
-        yield setUp('merge-and-overwrite');
-
-        yield beforeTest();
-
-        yield test({
-          merge: true,
-          overwrite: true
-        });
-
-        yield afterTest();
-
-        yield assert();
-      }));
     });
   }
 });
