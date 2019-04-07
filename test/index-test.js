@@ -99,67 +99,57 @@ describe(function() {
     yield assert();
   }));
 
-  it('file-to-folder-overwrite', co.wrap(function*() {
-    yield setUp('file-to-folder-overwrite');
+  for (let {
+    name,
+    options,
+    fixtures
+  } of
+    [
+      {
+        name: 'overwrite',
+        options: {
+          overwrite: true
+        },
+        fixtures: [
+          'file-to-folder-overwrite',
+          'folder-to-file-overwrite'
+        ]
+      },
+      {
+        name: 'merge',
+        options: {
+          merge: true
+        },
+        fixtures: [
+          'file-to-folder-merge',
+          'folder-to-file-merge'
+        ]
+      },
+      {
+        name: 'merge-and-overwrite',
+        options: {
+          merge: true,
+          overwrite: true
+        },
+        fixtures: [
+          'file-to-folder-merge-and-overwrite',
+          'folder-to-file-merge-and-overwrite'
+        ]
+      }
+    ]
+  ) {
+    describe(name, function() {
+      for (let fixturesDir of fixtures) {
+        it(fixturesDir, co.wrap(function*() {
+          yield setUp(fixturesDir);
 
-    yield test({
-      overwrite: true
+          yield test(options);
+
+          yield assert();
+        }));
+      }
     });
-
-    yield assert();
-  }));
-
-  it('folder-to-file-overwrite', co.wrap(function*() {
-    yield setUp('folder-to-file-overwrite');
-
-    yield test({
-      overwrite: true
-    });
-
-    yield assert();
-  }));
-
-  it('file-to-folder-merge', co.wrap(function*() {
-    yield setUp('file-to-folder-merge');
-
-    yield test({
-      merge: true
-    });
-
-    yield assert();
-  }));
-
-  it('folder-to-file-merge', co.wrap(function*() {
-    yield setUp('folder-to-file-merge');
-
-    yield test({
-      merge: true
-    });
-
-    yield assert();
-  }));
-
-  it('file-to-folder-merge-and-overwrite', co.wrap(function*() {
-    yield setUp('file-to-folder-merge-and-overwrite');
-
-    yield test({
-      merge: true,
-      overwrite: true
-    });
-
-    yield assert();
-  }));
-
-  it('folder-to-file-merge-and-overwrite', co.wrap(function*() {
-    yield setUp('folder-to-file-merge-and-overwrite');
-
-    yield test({
-      merge: true,
-      overwrite: true
-    });
-
-    yield assert();
-  }));
+  }
 
   for (let {
     name,
