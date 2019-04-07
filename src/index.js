@@ -8,7 +8,6 @@ const rimraf = denodeify(require('rimraf'));
 const rename = denodeify(fs.rename);
 const stat = denodeify(fs.stat);
 const readdir = denodeify(fs.readdir);
-const rmdir = denodeify(fs.rmdir);
 
 const _move = co.wrap(function* move(src, dest, options = {}) {
   let {
@@ -16,51 +15,55 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
     merge
   } = options;
 
-  let stats;
+  let destStats;
 
   try {
-    stats = yield stat(dest);
+    destStats = yield stat(dest);
   } catch (err) {
-    yield rename(src, dest);
-
-    return;
+    // do nothing
   }
 
-  if (!overwrite && !merge) {
+  if (destStats && !overwrite && !merge) {
     throw new Error('Destination directory already exists');
   }
 
-  if (!merge) {
-    if (overwrite) {
-      yield rimraf(dest);
-    }
+  let srcStats;
 
+  try {
+    srcStats = yield stat(src);
+  } catch (err) {
+    // do nothing
+  }
+
+  let areBothDirs = destStats && srcStats.isDirectory() && destStats.isDirectory();
+
+  // pre
+
+  if (overwrite && (!areBothDirs || !merge)) {
+    yield rimraf(dest);
+
+    destStats = null;
+  }
+
+  // during
+
+  if (!destStats) {
     yield rename(src, dest);
-
-    return;
   }
 
-  if (stats.isFile() || (yield stat(src)).isFile()) {
-    if (overwrite) {
-      yield rimraf(dest);
-
-      yield rename(src, dest);
-    } else {
-      yield rimraf(src);
+  if (merge && areBothDirs) {
+    for (let file of yield readdir(src)) {
+      yield _move(
+        path.join(src, file),
+        path.join(dest, file),
+        options
+      );
     }
-
-    return;
   }
 
-  for (let file of yield readdir(src)) {
-    yield _move(
-      path.join(src, file),
-      path.join(dest, file),
-      options
-    );
-  }
+  // post
 
-  yield rmdir(src);
+  yield rimraf(src);
 });
 
 module.exports = _move;
