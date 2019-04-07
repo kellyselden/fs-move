@@ -6,19 +6,25 @@ const path = require('path');
 const denodeify = require('denodeify');
 const rimraf = denodeify(require('rimraf'));
 const rename = denodeify(fs.rename);
-const stat = denodeify(fs.stat);
+const lstat = denodeify(fs.lstat);
 const readdir = denodeify(fs.readdir);
+const rmdir = denodeify(fs.rmdir);
 
 const _move = co.wrap(function* move(src, dest, options = {}) {
   let {
     overwrite,
-    merge
+    merge,
+    filter = () => true
   } = options;
+
+  if (!(yield Promise.resolve(filter(src, dest)))) {
+    return;
+  }
 
   let destStats;
 
   try {
-    destStats = yield stat(dest);
+    destStats = yield lstat(dest);
   } catch (err) {
     // do nothing
   }
@@ -27,13 +33,7 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
     throw new Error('Destination directory already exists');
   }
 
-  let srcStats;
-
-  try {
-    srcStats = yield stat(src);
-  } catch (err) {
-    // do nothing
-  }
+  let srcStats = yield lstat(src);
 
   let areBothDirs = destStats && srcStats.isDirectory() && destStats.isDirectory();
 
@@ -63,7 +63,11 @@ const _move = co.wrap(function* move(src, dest, options = {}) {
 
   // post
 
-  yield rimraf(src);
+  try {
+    yield rmdir(src);
+  } catch (err) {
+    // do nothing
+  }
 });
 
 module.exports = _move;

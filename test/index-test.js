@@ -99,6 +99,21 @@ describe(function() {
     yield assert();
   }));
 
+  it('filter', co.wrap(function*() {
+    yield setUp('filter');
+
+    yield test({
+      merge: true,
+      overwrite: true,
+      filter(src, dest) {
+        return path.basename(src) !== 'both.txt'
+          && path.basename(dest) !== 'both.txt';
+      }
+    });
+
+    yield assert();
+  }));
+
   for (let {
     name,
     options,
