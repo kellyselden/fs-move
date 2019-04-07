@@ -17,4 +17,11 @@ const move = require('fs-move');
     }
   });
 })();
+
+// or using callback
+move(src, dest, err => {
+  if (err) {
+    throw err;
+  }
+});
 ```

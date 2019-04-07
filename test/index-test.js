@@ -72,9 +72,11 @@ describe(function() {
     yield fixturifyWrite(fixturesDir['expected']['dest'], expectedDestTmpDir);
   });
 
-  let test = co.wrap(function*(options) {
+  let _test = move => co.wrap(function*(options) {
     yield move(actualSrcTmpDir, actualDestTmpDir, options);
   });
+  let testPromise = _test(move);
+  let testCallback = _test(denodeify(move));
 
   let assert = co.wrap(function*() {
     let expectedSrc = yield fixturifyRead(expectedSrcTmpDir);
@@ -90,140 +92,158 @@ describe(function() {
     sandbox.restore();
   });
 
-  it('dest-exists', co.wrap(function*() {
-    yield setUp('dest-exists');
-
-    yield expect(test())
-      .to.eventually.be.rejectedWith('Destination directory already exists');
-
-    yield assert();
-  }));
-
-  it('dest-does-not-exist', co.wrap(function*() {
-    yield setUp('dest-does-not-exist');
-
-    yield test();
-
-    yield assert();
-  }));
-
-  it('filter', co.wrap(function*() {
-    yield setUp('filter');
-
-    yield test({
-      merge: true,
-      overwrite: true,
-      filter(src, dest) {
-        return path.basename(src) !== 'both.txt'
-          && path.basename(dest) !== 'both.txt';
-      }
-    });
-
-    yield assert();
-  }));
-
   for (let {
     name,
-    options,
-    fixtures
+    test
   } of
     [
       {
-        name: 'overwrite',
-        options: {
-          overwrite: true
-        },
-        fixtures: [
-          'file-to-folder-overwrite',
-          'folder-to-file-overwrite'
-        ]
+        name: 'promise',
+        test: testPromise
       },
       {
-        name: 'merge',
-        options: {
-          merge: true
-        },
-        fixtures: [
-          'file-to-folder-merge',
-          'folder-to-file-merge'
-        ]
-      },
-      {
-        name: 'merge-and-overwrite',
-        options: {
-          merge: true,
-          overwrite: true
-        },
-        fixtures: [
-          'file-to-folder-merge-and-overwrite',
-          'folder-to-file-merge-and-overwrite'
-        ]
+        name: 'callback',
+        test: testCallback
       }
     ]
   ) {
     describe(name, function() {
+      it('dest-exists', co.wrap(function*() {
+        yield setUp('dest-exists');
+
+        yield expect(test())
+          .to.eventually.be.rejectedWith('Destination directory already exists');
+
+        yield assert();
+      }));
+
+      it('dest-does-not-exist', co.wrap(function*() {
+        yield setUp('dest-does-not-exist');
+
+        yield test();
+
+        yield assert();
+      }));
+
+      it('filter', co.wrap(function*() {
+        yield setUp('filter');
+
+        yield test({
+          merge: true,
+          overwrite: true,
+          filter(src, dest) {
+            return path.basename(src) !== 'both.txt'
+              && path.basename(dest) !== 'both.txt';
+          }
+        });
+
+        yield assert();
+      }));
+
       for (let {
-        name: _name,
-        beforeTest = () => Promise.resolve(),
-        afterTest = () => Promise.resolve()
+        name,
+        options,
+        fixtures
       } of
         [
           {
-            name: 'default'
+            name: 'overwrite',
+            options: {
+              overwrite: true
+            },
+            fixtures: [
+              'file-to-folder-overwrite',
+              'folder-to-file-overwrite'
+            ]
           },
           {
-            name: 'symlink',
-            beforeTest: co.wrap(function*() {
-              yield symlink(actualSrcTmpDir);
-            }),
-            afterTest: co.wrap(function*() {
-              yield symlink(expectedDestTmpDir);
-            })
+            name: 'merge',
+            options: {
+              merge: true
+            },
+            fixtures: [
+              'file-to-folder-merge',
+              'folder-to-file-merge'
+            ]
           },
           {
-            name: 'broken symlink',
-            beforeTest: co.wrap(function*() {
-              yield symlink(actualSrcTmpDir);
-
-              yield breakSymlink(actualSrcTmpDir);
-            }),
-            afterTest: co.wrap(function*() {
-              yield symlink(expectedDestTmpDir);
-
-              yield breakSymlink(expectedDestTmpDir);
-            })
-          },
-          {
-            name: 'broken rename',
-            beforeTest() {
-              sandbox.stub(fs, 'rename').callsArgWith(2, { code: 'EXDEV' });
-
-              return Promise.resolve();
-            }
+            name: 'merge-and-overwrite',
+            options: {
+              merge: true,
+              overwrite: true
+            },
+            fixtures: [
+              'file-to-folder-merge-and-overwrite',
+              'folder-to-file-merge-and-overwrite'
+            ]
           }
         ]
       ) {
-        it(_name, co.wrap(function*() {
-          yield setUp(name);
+        describe(name, function() {
+          for (let {
+            name: _name,
+            beforeTest = () => Promise.resolve(),
+            afterTest = () => Promise.resolve()
+          } of
+            [
+              {
+                name: 'default'
+              },
+              {
+                name: 'symlink',
+                beforeTest: co.wrap(function*() {
+                  yield symlink(actualSrcTmpDir);
+                }),
+                afterTest: co.wrap(function*() {
+                  yield symlink(expectedDestTmpDir);
+                })
+              },
+              {
+                name: 'broken symlink',
+                beforeTest: co.wrap(function*() {
+                  yield symlink(actualSrcTmpDir);
 
-          yield beforeTest();
+                  yield breakSymlink(actualSrcTmpDir);
+                }),
+                afterTest: co.wrap(function*() {
+                  yield symlink(expectedDestTmpDir);
 
-          yield test(options);
+                  yield breakSymlink(expectedDestTmpDir);
+                })
+              },
+              {
+                name: 'broken rename',
+                beforeTest() {
+                  sandbox.stub(fs, 'rename').callsArgWith(2, { code: 'EXDEV' });
 
-          yield afterTest();
+                  return Promise.resolve();
+                }
+              }
+            ]
+          ) {
+            it(_name, co.wrap(function*() {
+              yield setUp(name);
 
-          yield assert();
-        }));
-      }
+              yield beforeTest();
 
-      for (let fixturesDir of fixtures) {
-        it(fixturesDir, co.wrap(function*() {
-          yield setUp(fixturesDir);
+              yield test(options);
 
-          yield test(options);
+              yield afterTest();
 
-          yield assert();
-        }));
+              yield assert();
+            }));
+          }
+
+          for (let fixturesDir of fixtures) {
+            it(fixturesDir, co.wrap(function*() {
+              yield setUp(fixturesDir);
+
+              yield test(options);
+
+              yield assert();
+            }));
+          }
+        });
       }
     });
   }
