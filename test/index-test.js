@@ -99,8 +99,8 @@ describe(function() {
     yield assert();
   }));
 
-  it('overwrite', co.wrap(function*() {
-    yield setUp('overwrite');
+  it('file-to-folder-overwrite', co.wrap(function*() {
+    yield setUp('file-to-folder-overwrite');
 
     yield test({
       overwrite: true
@@ -109,8 +109,18 @@ describe(function() {
     yield assert();
   }));
 
-  it('merge', co.wrap(function*() {
-    yield setUp('merge');
+  it('folder-to-file-overwrite', co.wrap(function*() {
+    yield setUp('folder-to-file-overwrite');
+
+    yield test({
+      overwrite: true
+    });
+
+    yield assert();
+  }));
+
+  it('file-to-folder-merge', co.wrap(function*() {
+    yield setUp('file-to-folder-merge');
 
     yield test({
       merge: true
@@ -119,8 +129,18 @@ describe(function() {
     yield assert();
   }));
 
-  it('merge-and-overwrite', co.wrap(function*() {
-    yield setUp('merge-and-overwrite');
+  it('folder-to-file-merge', co.wrap(function*() {
+    yield setUp('folder-to-file-merge');
+
+    yield test({
+      merge: true
+    });
+
+    yield assert();
+  }));
+
+  it('file-to-folder-merge-and-overwrite', co.wrap(function*() {
+    yield setUp('file-to-folder-merge-and-overwrite');
 
     yield test({
       merge: true,
@@ -130,105 +150,95 @@ describe(function() {
     yield assert();
   }));
 
-  describe('symlink', function() {
-    it('overwrite', co.wrap(function*() {
-      yield setUp('overwrite');
+  it('folder-to-file-merge-and-overwrite', co.wrap(function*() {
+    yield setUp('folder-to-file-merge-and-overwrite');
 
-      yield symlink(actualSrcTmpDir);
+    yield test({
+      merge: true,
+      overwrite: true
+    });
 
-      yield test({
-        overwrite: true
-      });
+    yield assert();
+  }));
 
-      yield symlink(expectedDestTmpDir);
+  for (let {
+    name,
+    beforeTest,
+    afterTest
+  } of
+    [
+      {
+        name: 'default',
+        beforeTest: () => Promise.resolve(),
+        afterTest: () => Promise.resolve()
+      },
+      {
+        name: 'symlink',
+        beforeTest: co.wrap(function*() {
+          yield symlink(actualSrcTmpDir);
+        }),
+        afterTest: co.wrap(function*() {
+          yield symlink(expectedDestTmpDir);
+        })
+      },
+      {
+        name: 'broken symlink',
+        beforeTest: co.wrap(function*() {
+          yield symlink(actualSrcTmpDir);
 
-      yield assert();
-    }));
+          yield breakSymlink(actualSrcTmpDir);
+        }),
+        afterTest: co.wrap(function*() {
+          yield symlink(expectedDestTmpDir);
 
-    it('merge', co.wrap(function*() {
-      yield setUp('merge');
+          yield breakSymlink(expectedDestTmpDir);
+        })
+      }
+    ]
+  ) {
+    describe(name, function() {
+      it('overwrite', co.wrap(function*() {
+        yield setUp('overwrite');
 
-      yield symlink(actualSrcTmpDir);
+        yield beforeTest();
 
-      yield test({
-        merge: true
-      });
+        yield test({
+          overwrite: true
+        });
 
-      yield symlink(expectedDestTmpDir);
+        yield afterTest();
 
-      yield assert();
-    }));
+        yield assert();
+      }));
 
-    it('merge-and-overwrite', co.wrap(function*() {
-      yield setUp('merge-and-overwrite');
+      it('merge', co.wrap(function*() {
+        yield setUp('merge');
 
-      yield symlink(actualSrcTmpDir);
+        yield beforeTest();
 
-      yield test({
-        merge: true,
-        overwrite: true
-      });
+        yield test({
+          merge: true
+        });
 
-      yield symlink(expectedDestTmpDir);
+        yield afterTest();
 
-      yield assert();
-    }));
-  });
+        yield assert();
+      }));
 
-  describe('broken symlink', function() {
-    it('overwrite', co.wrap(function*() {
-      yield setUp('overwrite');
+      it('merge-and-overwrite', co.wrap(function*() {
+        yield setUp('merge-and-overwrite');
 
-      yield symlink(actualSrcTmpDir);
+        yield beforeTest();
 
-      yield breakSymlink(actualSrcTmpDir);
+        yield test({
+          merge: true,
+          overwrite: true
+        });
 
-      yield test({
-        overwrite: true
-      });
+        yield afterTest();
 
-      yield symlink(expectedDestTmpDir);
-
-      yield breakSymlink(expectedDestTmpDir);
-
-      yield assert();
-    }));
-
-    it('merge', co.wrap(function*() {
-      yield setUp('merge');
-
-      yield symlink(actualSrcTmpDir);
-
-      yield breakSymlink(actualSrcTmpDir);
-
-      yield test({
-        merge: true
-      });
-
-      yield symlink(expectedDestTmpDir);
-
-      yield breakSymlink(expectedDestTmpDir);
-
-      yield assert();
-    }));
-
-    it('merge-and-overwrite', co.wrap(function*() {
-      yield setUp('merge-and-overwrite');
-
-      yield symlink(actualSrcTmpDir);
-
-      yield breakSymlink(actualSrcTmpDir);
-
-      yield test({
-        merge: true,
-        overwrite: true
-      });
-
-      yield symlink(expectedDestTmpDir);
-
-      yield breakSymlink(expectedDestTmpDir);
-
-      yield assert();
-    }));
-  });
+        yield assert();
+      }));
+    });
+  }
 });
