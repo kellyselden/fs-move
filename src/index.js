@@ -1,14 +1,8 @@
 'use strict';
 
 const co = require('co');
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
-const denodeify = require('denodeify');
-const rimraf = denodeify(require('rimraf'));
-const cpr = denodeify(require('cpr'));
-const lstat = denodeify(fs.lstat);
-const readdir = denodeify(fs.readdir);
-const rmdir = denodeify(fs.rmdir);
 
 const _move = co.wrap(function* move(src, dest, options = {}, callback) {
   if (typeof options === 'function') {
@@ -31,21 +25,21 @@ const _move = co.wrap(function* move(src, dest, options = {}, callback) {
     let destStats;
 
     try {
-      destStats = yield lstat(dest);
+      destStats = yield fs.lstat(dest);
     } catch (err) {}
 
     if (destStats && !overwrite && !merge) {
       throw new Error('Destination directory already exists');
     }
 
-    let srcStats = yield lstat(src);
+    let srcStats = yield fs.lstat(src);
 
     let areBothDirs = destStats && srcStats.isDirectory() && destStats.isDirectory();
 
     // pre
 
     if (overwrite && (!areBothDirs || !merge)) {
-      yield rimraf(dest);
+      yield fs.remove(dest);
 
       destStats = null;
     }
@@ -54,18 +48,18 @@ const _move = co.wrap(function* move(src, dest, options = {}, callback) {
 
     if (!destStats) {
       try {
-        yield denodeify(fs.rename)(src, dest);
+        yield fs.rename(src, dest);
       } catch (err) {
         if (err.code === 'EXDEV') {
-          yield cpr(src, dest);
+          yield fs.copy(src, dest);
 
-          yield rimraf(src);
+          yield fs.remove(src);
         }
       }
     }
 
     if (merge && areBothDirs) {
-      for (let file of yield readdir(src)) {
+      for (let file of yield fs.readdir(src)) {
         yield _move(
           path.join(src, file),
           path.join(dest, file),
@@ -77,10 +71,10 @@ const _move = co.wrap(function* move(src, dest, options = {}, callback) {
     // post
 
     if (purge) {
-      yield rimraf(src);
+      yield fs.remove(src);
     } else {
       try {
-        yield rmdir(src);
+        yield fs.rmdir(src);
       } catch (err) {}
     }
 

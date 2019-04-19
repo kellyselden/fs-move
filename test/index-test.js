@@ -2,15 +2,11 @@
 
 const { describe } = require('./helpers/mocha');
 const { expect } = require('./helpers/chai');
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 const co = require('co');
 const denodeify = require('denodeify');
 const tmpDir = denodeify(require('tmp').dir);
-const rmdir = denodeify(fs.rmdir);
-const writeFile = denodeify(fs.writeFile);
-const _symlink = denodeify(fs.symlink);
-const unlink = denodeify(fs.unlink);
 const fixturify = require('fixturify');
 const sinon = require('sinon');
 const fixtures = require('./fixtures');
@@ -20,21 +16,21 @@ const fixturifyWrite = co.wrap(function*(src, dest) {
   if (src) {
     fixturify.writeSync(dest, src);
   } else {
-    yield rmdir(dest);
+    yield fs.rmdir(dest);
   }
 });
 
 const symlink = co.wrap(function*(dir) {
-  yield writeFile(path.join(dir, 'symlink-src.txt'), '');
+  yield fs.writeFile(path.join(dir, 'symlink-src.txt'), '');
 
-  yield _symlink(
+  yield fs.symlink(
     path.normalize('./symlink-src.txt'),
     path.join(dir, 'symlink-dest.txt')
   );
 });
 
 const breakSymlink = co.wrap(function*(dir) {
-  yield unlink(path.join(dir, 'symlink-src.txt'));
+  yield fs.unlink(path.join(dir, 'symlink-src.txt'));
 });
 
 const fixturifyRead = co.wrap(function*(dir) {
@@ -225,7 +221,7 @@ describe(function() {
               {
                 name: 'broken rename',
                 beforeTest() {
-                  sandbox.stub(fs, 'rename').callsArgWith(2, { code: 'EXDEV' });
+                  sandbox.stub(fs, 'rename').rejects(Object.assign(new Error(), { code: 'EXDEV' }));
 
                   return Promise.resolve();
                 }
