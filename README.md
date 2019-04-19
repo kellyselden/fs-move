@@ -26,3 +26,20 @@ move(src, dest, err => {
   }
 });
 ```
+
+## CLI
+
+```shell
+$ fs-move
+
+Usage: fs-move [options] <source...> <destination>
+
+Move directory with options
+
+Options:
+  -V, --version  output the version number
+  --merge        Merge existing directories recursively
+  --overwrite    Overwrite existing files
+  --purge        Delete source files even when not moved
+  -h, --help     output usage information
+```

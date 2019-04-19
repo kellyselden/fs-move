@@ -8,6 +8,7 @@ const denodeify = require('denodeify');
 const tmpDir = denodeify(require('tmp').dir);
 const fixturify = require('fixturify');
 const sinon = require('sinon');
+const spawn = require('cross-spawn');
 const fixtures = require('./fixtures');
 const move = require('../src');
 
@@ -72,6 +73,28 @@ describe(function() {
   };
   let testPromise = _test(move);
   let testCallback = _test(denodeify(move));
+  let testCLI = _test(
+    (src, dest, options) =>
+      new Promise((resolve, reject) => {
+        let process = spawn(
+          'node',
+          ['bin/fs-move.js'].concat(
+            Object.keys(options || {})
+              .filter(o => options[o])
+              .map(o => '--' + o),
+            [src, dest]
+          ),
+          { stdio: 'pipe' }
+        );
+        process.once('exit', (code, signal) => {
+          if (code !== 0 || signal !== null) {
+            reject(new Error(process.stderr.setEncoding('utf8').read()));
+          }
+          resolve();
+        });
+      })
+  );
+
 
   let assert = async function() {
     let expectedSrc = await fixturifyRead(expectedSrcTmpDir);
@@ -88,21 +111,25 @@ describe(function() {
   });
 
   for (let {
-    name,
+    apiName,
     test
   } of
     [
       {
-        name: 'promise',
+        apiName: 'promise',
         test: testPromise
       },
       {
-        name: 'callback',
+        apiName: 'callback',
         test: testCallback
+      },
+      {
+        apiName: 'cli',
+        test: testCLI
       }
     ]
   ) {
-    describe(name, function() {
+    describe(apiName, function() {
       it('dest-exists', async function() {
         await setUp('dest-exists');
 
@@ -120,29 +147,31 @@ describe(function() {
         await assert();
       });
 
-      it('filter', async function() {
-        await setUp('filter');
+      if (apiName !== 'cli') {
+        it('filter', async function() {
+          await setUp('filter');
 
-        await test({
-          merge: true,
-          overwrite: true,
-          filter(src, dest) {
-            return path.basename(src) !== 'both.txt'
-              && path.basename(dest) !== 'both.txt';
-          }
+          await test({
+            merge: true,
+            overwrite: true,
+            filter(src, dest) {
+              return path.basename(src) !== 'both.txt'
+                && path.basename(dest) !== 'both.txt';
+            }
+          });
+
+          await assert();
         });
-
-        await assert();
-      });
+      }
 
       for (let {
-        name,
+        optionSetName,
         options,
         fixtures
       } of
         [
           {
-            name: 'overwrite',
+            optionSetName: 'overwrite',
             options: {
               overwrite: true
             },
@@ -152,7 +181,7 @@ describe(function() {
             ]
           },
           {
-            name: 'merge',
+            optionSetName: 'merge',
             options: {
               merge: true
             },
@@ -162,7 +191,7 @@ describe(function() {
             ]
           },
           {
-            name: 'merge-and-overwrite',
+            optionSetName: 'merge-and-overwrite',
             options: {
               merge: true,
               overwrite: true
@@ -173,7 +202,7 @@ describe(function() {
             ]
           },
           {
-            name: 'merge-and-purge',
+            optionSetName: 'merge-and-purge',
             options: {
               merge: true,
               purge: true
@@ -185,18 +214,19 @@ describe(function() {
           }
         ]
       ) {
-        describe(name, function() {
+        describe(optionSetName, function() {
           for (let {
-            name: _name,
+            testTypeName,
             beforeTest = () => Promise.resolve(),
-            afterTest = () => Promise.resolve()
+            afterTest = () => Promise.resolve(),
+            skipFor
           } of
             [
               {
-                name: 'default'
+                testTypeName: 'default'
               },
               {
-                name: 'symlink',
+                testTypeName: 'symlink',
                 async beforeTest() {
                   await symlink(actualSrcTmpDir);
                 },
@@ -205,7 +235,7 @@ describe(function() {
                 }
               },
               {
-                name: 'broken symlink',
+                testTypeName: 'broken symlink',
                 async beforeTest() {
                   await symlink(actualSrcTmpDir);
 
@@ -218,26 +248,29 @@ describe(function() {
                 }
               },
               {
-                name: 'broken rename',
+                testTypeName: 'broken rename',
                 beforeTest() {
                   sandbox.stub(fs, 'rename').rejects(Object.assign(new Error(), { code: 'EXDEV' }));
 
                   return Promise.resolve();
-                }
+                },
+                skipFor: ['cli']
               }
             ]
           ) {
-            it(_name, async function() {
-              await setUp(name);
+            if (!skipFor || !(apiName in skipFor)) {
+              it(testTypeName, async function() {
+                await setUp(optionSetName);
 
-              await beforeTest();
+                await beforeTest();
 
-              await test(options);
+                await test(options);
 
-              await afterTest();
+                await afterTest();
 
-              await assert();
-            });
+                await assert();
+              });
+            }
           }
 
           for (let fixturesDir of fixtures) {

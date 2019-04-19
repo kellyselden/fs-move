@@ -28,6 +28,15 @@ module.exports = {
       rules: {
         'mocha/no-exclusive-tests': 'error'
       },
+    },
+    {
+      files: [
+        'bin/**'
+      ],
+      rules: {
+        'no-console': 'off',
+        'no-process-exit': 'off'
+      },
     }
   ]
 };
