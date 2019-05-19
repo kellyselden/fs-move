@@ -32,9 +32,7 @@ const _move = co.wrap(function* move(src, dest, options = {}, callback) {
 
     try {
       destStats = yield lstat(dest);
-    } catch (err) {
-      // do nothing
-    }
+    } catch (err) {}
 
     if (destStats && !overwrite && !merge) {
       throw new Error('Destination directory already exists');
@@ -83,9 +81,7 @@ const _move = co.wrap(function* move(src, dest, options = {}, callback) {
     } else {
       try {
         yield rmdir(src);
-      } catch (err) {
-        // do nothing
-      }
+      } catch (err) {}
     }
 
     if (callback) {
