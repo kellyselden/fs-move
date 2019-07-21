@@ -1,18 +1,12 @@
 os:
 - linux
 - osx
+- windows
 language: node_js
 node_js:
-- '6'
-before_install:
-- npm install -g npm@6
+- '8'
 before_script:
 - npm run lint
-jobs:
-  include:
-  - os: windows
-    node_js: '8'
-    before_install: skip
 deploy:
   provider: npm
   email: kellyselden@gmail.com
