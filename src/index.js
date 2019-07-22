@@ -2,12 +2,12 @@
 
 const fs = require('fs');
 const path = require('path');
-const denodeify = require('denodeify');
-const rimraf = denodeify(require('rimraf'));
-const cpr = denodeify(require('cpr'));
-const lstat = denodeify(fs.lstat);
-const readdir = denodeify(fs.readdir);
-const rmdir = denodeify(fs.rmdir);
+const { promisify } = require('util');
+const rimraf = promisify(require('rimraf'));
+const cpr = promisify(require('cpr'));
+const lstat = promisify(fs.lstat);
+const readdir = promisify(fs.readdir);
+const rmdir = promisify(fs.rmdir);
 
 async function move(src, dest, options = {}, callback) {
   if (typeof options === 'function') {
@@ -53,7 +53,7 @@ async function move(src, dest, options = {}, callback) {
 
     if (!destStats) {
       try {
-        await denodeify(fs.rename)(src, dest);
+        await promisify(fs.rename)(src, dest);
       } catch (err) {
         if (err.code === 'EXDEV') {
           await cpr(src, dest);
