@@ -4,12 +4,12 @@ const { describe } = require('./helpers/mocha');
 const { expect } = require('./helpers/chai');
 const fs = require('fs');
 const path = require('path');
-const denodeify = require('denodeify');
-const tmpDir = denodeify(require('tmp').dir);
-const rmdir = denodeify(fs.rmdir);
-const writeFile = denodeify(fs.writeFile);
-const _symlink = denodeify(fs.symlink);
-const unlink = denodeify(fs.unlink);
+const { promisify } = require('util');
+const tmpDir = promisify(require('tmp').dir);
+const rmdir = promisify(fs.rmdir);
+const writeFile = promisify(fs.writeFile);
+const _symlink = promisify(fs.symlink);
+const unlink = promisify(fs.unlink);
 const fixturify = require('fixturify');
 const sinon = require('sinon');
 const fixtures = require('./fixtures');
@@ -75,7 +75,7 @@ describe(function() {
     await move(actualSrcTmpDir, actualDestTmpDir, options);
   };
   let testPromise = _test(move);
-  let testCallback = _test(denodeify(move));
+  let testCallback = _test(promisify(move));
 
   async function assert() {
     let expectedSrc = await fixturifyRead(expectedSrcTmpDir);
