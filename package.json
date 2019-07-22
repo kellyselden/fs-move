@@ -2,7 +2,7 @@
   "name": "fs-move",
   "version": "1.3.0",
   "description": "Move directory with options",
-  "main": "src/index.js",
+  "main": "src",
   "files": [
     "src"
   ],
