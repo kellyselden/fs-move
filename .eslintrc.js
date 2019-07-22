@@ -4,15 +4,10 @@ module.exports = {
     ecmaVersion: 2018
   },
   env: {
-    es6: true,
-    node: true
+    es6: true
   },
-  plugins: [
-    'node'
-  ],
   extends: [
-    'sane',
-    'plugin:node/recommended'
+    'sane-node'
   ],
   overrides: [
     {
@@ -25,9 +20,14 @@ module.exports = {
       plugins: [
         'mocha'
       ],
+      extends: [
+        'plugin:mocha/recommended'
+      ],
       rules: {
-        'mocha/no-exclusive-tests': 'error'
-      },
+        'mocha/no-hooks-for-single-case': 0,
+        'mocha/no-setup-in-describe': 0,
+        'mocha/no-nested-tests': 0
+      }
     }
   ]
 };
