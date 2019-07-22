@@ -1,6 +1,5 @@
 'use strict';
 
-const co = require('co');
 const fs = require('fs');
 const path = require('path');
 const denodeify = require('denodeify');
@@ -10,7 +9,7 @@ const lstat = denodeify(fs.lstat);
 const readdir = denodeify(fs.readdir);
 const rmdir = denodeify(fs.rmdir);
 
-const _move = co.wrap(function* move(src, dest, options = {}, callback) {
+async function move(src, dest, options = {}, callback) {
   if (typeof options === 'function') {
     callback = options;
     options = {};
@@ -24,28 +23,28 @@ const _move = co.wrap(function* move(src, dest, options = {}, callback) {
       filter = () => true
     } = options;
 
-    if (!(yield Promise.resolve(filter(src, dest)))) {
+    if (!await Promise.resolve(filter(src, dest))) {
       return;
     }
 
     let destStats;
 
     try {
-      destStats = yield lstat(dest);
+      destStats = await lstat(dest);
     } catch (err) {}
 
     if (destStats && !overwrite && !merge) {
       throw new Error('Destination directory already exists');
     }
 
-    let srcStats = yield lstat(src);
+    let srcStats = await lstat(src);
 
     let areBothDirs = destStats && srcStats.isDirectory() && destStats.isDirectory();
 
     // pre
 
     if (overwrite && (!areBothDirs || !merge)) {
-      yield rimraf(dest);
+      await rimraf(dest);
 
       destStats = null;
     }
@@ -54,19 +53,19 @@ const _move = co.wrap(function* move(src, dest, options = {}, callback) {
 
     if (!destStats) {
       try {
-        yield denodeify(fs.rename)(src, dest);
+        await denodeify(fs.rename)(src, dest);
       } catch (err) {
         if (err.code === 'EXDEV') {
-          yield cpr(src, dest);
+          await cpr(src, dest);
 
-          yield rimraf(src);
+          await rimraf(src);
         }
       }
     }
 
     if (merge && areBothDirs) {
-      for (let file of yield readdir(src)) {
-        yield _move(
+      for (let file of await readdir(src)) {
+        await move(
           path.join(src, file),
           path.join(dest, file),
           options
@@ -77,10 +76,10 @@ const _move = co.wrap(function* move(src, dest, options = {}, callback) {
     // post
 
     if (purge) {
-      yield rimraf(src);
+      await rimraf(src);
     } else {
       try {
-        yield rmdir(src);
+        await rmdir(src);
       } catch (err) {}
     }
 
@@ -94,6 +93,6 @@ const _move = co.wrap(function* move(src, dest, options = {}, callback) {
 
     callback(err);
   }
-});
+}
 
-module.exports = _move;
+module.exports = move;

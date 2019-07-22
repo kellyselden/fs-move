@@ -4,7 +4,6 @@ const { describe } = require('./helpers/mocha');
 const { expect } = require('./helpers/chai');
 const fs = require('fs');
 const path = require('path');
-const co = require('co');
 const denodeify = require('denodeify');
 const tmpDir = denodeify(require('tmp').dir);
 const rmdir = denodeify(fs.rmdir);
@@ -16,36 +15,36 @@ const sinon = require('sinon');
 const fixtures = require('./fixtures');
 const move = require('../src');
 
-const fixturifyWrite = co.wrap(function*(src, dest) {
+async function fixturifyWrite(src, dest) {
   if (src) {
     fixturify.writeSync(dest, src);
   } else {
-    yield rmdir(dest);
+    await rmdir(dest);
   }
-});
+}
 
-const symlink = co.wrap(function*(dir) {
-  yield writeFile(path.join(dir, 'symlink-src.txt'), '');
+async function symlink(dir) {
+  await writeFile(path.join(dir, 'symlink-src.txt'), '');
 
-  yield _symlink(
+  await _symlink(
     path.normalize('./symlink-src.txt'),
     path.join(dir, 'symlink-dest.txt')
   );
-});
+}
 
-const breakSymlink = co.wrap(function*(dir) {
-  yield unlink(path.join(dir, 'symlink-src.txt'));
-});
+async function breakSymlink(dir) {
+  await unlink(path.join(dir, 'symlink-src.txt'));
+}
 
-const fixturifyRead = co.wrap(function*(dir) {
+async function fixturifyRead(dir) {
   let obj;
   try {
     obj = fixturify.readSync(dir);
   } catch (err) {
     obj = null;
   }
-  return yield Promise.resolve(obj);
-});
+  return await Promise.resolve(obj);
+}
 
 describe(function() {
   let sandbox;
@@ -54,39 +53,39 @@ describe(function() {
   let expectedSrcTmpDir;
   let expectedDestTmpDir;
 
-  beforeEach(co.wrap(function*() {
+  beforeEach(async function() {
     sandbox = sinon.createSandbox();
 
-    actualSrcTmpDir = yield tmpDir();
-    actualDestTmpDir = yield tmpDir();
-    expectedSrcTmpDir = yield tmpDir();
-    expectedDestTmpDir = yield tmpDir();
-  }));
+    actualSrcTmpDir = await tmpDir();
+    actualDestTmpDir = await tmpDir();
+    expectedSrcTmpDir = await tmpDir();
+    expectedDestTmpDir = await tmpDir();
+  });
 
-  let setUp = co.wrap(function*(fixturesDir) {
+  async function setUp(fixturesDir) {
     fixturesDir = fixtures[fixturesDir];
 
-    yield fixturifyWrite(fixturesDir['initial']['src'], actualSrcTmpDir);
-    yield fixturifyWrite(fixturesDir['initial']['dest'], actualDestTmpDir);
-    yield fixturifyWrite(fixturesDir['expected']['src'], expectedSrcTmpDir);
-    yield fixturifyWrite(fixturesDir['expected']['dest'], expectedDestTmpDir);
-  });
+    await fixturifyWrite(fixturesDir['initial']['src'], actualSrcTmpDir);
+    await fixturifyWrite(fixturesDir['initial']['dest'], actualDestTmpDir);
+    await fixturifyWrite(fixturesDir['expected']['src'], expectedSrcTmpDir);
+    await fixturifyWrite(fixturesDir['expected']['dest'], expectedDestTmpDir);
+  }
 
-  let _test = move => co.wrap(function*(options) {
-    yield move(actualSrcTmpDir, actualDestTmpDir, options);
-  });
+  let _test = move => async function(options) {
+    await move(actualSrcTmpDir, actualDestTmpDir, options);
+  };
   let testPromise = _test(move);
   let testCallback = _test(denodeify(move));
 
-  let assert = co.wrap(function*() {
-    let expectedSrc = yield fixturifyRead(expectedSrcTmpDir);
-    let expectedDest = yield fixturifyRead(expectedDestTmpDir);
-    let actualSrc = yield fixturifyRead(actualSrcTmpDir);
-    let actualDest = yield fixturifyRead(actualDestTmpDir);
+  async function assert() {
+    let expectedSrc = await fixturifyRead(expectedSrcTmpDir);
+    let expectedDest = await fixturifyRead(expectedDestTmpDir);
+    let actualSrc = await fixturifyRead(actualSrcTmpDir);
+    let actualDest = await fixturifyRead(actualDestTmpDir);
 
     expect(actualSrc).to.deep.equal(expectedSrc);
     expect(actualDest).to.deep.equal(expectedDest);
-  });
+  }
 
   afterEach(function() {
     sandbox.restore();
@@ -108,27 +107,27 @@ describe(function() {
     ]
   ) {
     describe(name, function() {
-      it('dest-exists', co.wrap(function*() {
-        yield setUp('dest-exists');
+      it('dest-exists', async function() {
+        await setUp('dest-exists');
 
-        yield expect(test())
+        await expect(test())
           .to.eventually.be.rejectedWith('Destination directory already exists');
 
-        yield assert();
-      }));
+        await assert();
+      });
 
-      it('dest-does-not-exist', co.wrap(function*() {
-        yield setUp('dest-does-not-exist');
+      it('dest-does-not-exist', async function() {
+        await setUp('dest-does-not-exist');
 
-        yield test();
+        await test();
 
-        yield assert();
-      }));
+        await assert();
+      });
 
-      it('filter', co.wrap(function*() {
-        yield setUp('filter');
+      it('filter', async function() {
+        await setUp('filter');
 
-        yield test({
+        await test({
           merge: true,
           overwrite: true,
           filter(src, dest) {
@@ -137,8 +136,8 @@ describe(function() {
           }
         });
 
-        yield assert();
-      }));
+        await assert();
+      });
 
       for (let {
         name,
@@ -202,25 +201,25 @@ describe(function() {
               },
               {
                 name: 'symlink',
-                beforeTest: co.wrap(function*() {
-                  yield symlink(actualSrcTmpDir);
-                }),
-                afterTest: co.wrap(function*() {
-                  yield symlink(expectedDestTmpDir);
-                })
+                async beforeTest() {
+                  await symlink(actualSrcTmpDir);
+                },
+                async afterTest() {
+                  await symlink(expectedDestTmpDir);
+                }
               },
               {
                 name: 'broken symlink',
-                beforeTest: co.wrap(function*() {
-                  yield symlink(actualSrcTmpDir);
+                async beforeTest() {
+                  await symlink(actualSrcTmpDir);
 
-                  yield breakSymlink(actualSrcTmpDir);
-                }),
-                afterTest: co.wrap(function*() {
-                  yield symlink(expectedDestTmpDir);
+                  await breakSymlink(actualSrcTmpDir);
+                },
+                async afterTest() {
+                  await symlink(expectedDestTmpDir);
 
-                  yield breakSymlink(expectedDestTmpDir);
-                })
+                  await breakSymlink(expectedDestTmpDir);
+                }
               },
               {
                 name: 'broken rename',
@@ -232,27 +231,27 @@ describe(function() {
               }
             ]
           ) {
-            it(_name, co.wrap(function*() {
-              yield setUp(name);
+            it(_name, async function() {
+              await setUp(name);
 
-              yield beforeTest();
+              await beforeTest();
 
-              yield test(options);
+              await test(options);
 
-              yield afterTest();
+              await afterTest();
 
-              yield assert();
-            }));
+              await assert();
+            });
           }
 
           for (let fixturesDir of fixtures) {
-            it(fixturesDir, co.wrap(function*() {
-              yield setUp(fixturesDir);
+            it(fixturesDir, async function() {
+              await setUp(fixturesDir);
 
-              yield test(options);
+              await test(options);
 
-              yield assert();
-            }));
+              await assert();
+            });
           }
         });
       }
