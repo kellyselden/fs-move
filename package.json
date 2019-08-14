@@ -1,6 +1,6 @@
 {
   "name": "fs-move",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Move directory with options",
   "main": "src",
   "files": [
