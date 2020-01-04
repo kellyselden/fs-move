@@ -45,7 +45,7 @@
     "eslint-plugin-node": "^10.0.0",
     "eslint-plugin-prefer-let": "^1.0.1",
     "fixturify": "^1.2.0",
-    "mocha": "^6.0.2",
+    "mocha": "^7.0.0",
     "mocha-helpers": "^4.0.0",
     "renovate-config-standard": "^2.0.0",
     "sinon": "^8.0.0",
