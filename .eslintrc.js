@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = {
   root: true,
   parserOptions: {
@@ -12,7 +14,7 @@ module.exports = {
   overrides: [
     {
       files: [
-        'test/**'
+        'test/**/*-test.js'
       ],
       env: {
         mocha: true
@@ -24,9 +26,10 @@ module.exports = {
         'plugin:mocha/recommended'
       ],
       rules: {
-        'mocha/no-hooks-for-single-case': 0,
-        'mocha/no-setup-in-describe': 0,
-        'mocha/no-nested-tests': 0
+        'mocha/no-exclusive-tests': 'error',
+        'mocha/no-hooks-for-single-case': 'off',
+        'mocha/no-setup-in-describe': 'off',
+        'mocha/no-nested-tests': 'off'
       }
     }
   ]
