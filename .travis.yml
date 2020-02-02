@@ -5,13 +5,34 @@ os:
 language: node_js
 node_js:
 - '8'
+branches:
+  only:
+  - master
+  # npm version tags
+  - /^v\d+\.\d+\.\d+$/
+cache:
+  directories:
+  - "$HOME/.npm"
 before_script:
 - npm run lint
-deploy:
-  provider: npm
-  email: kellyselden@gmail.com
-  api_key:
-    secure: CUBLuH3TYObIsyJNZpPF0XLZXsqg8MqPpFwDs/9447BZxQxLm0aZODpkLJ8wZIdIjUzVclRbxs/0qeP0iajsBvROAT2p0KfujOtuxVHifJbpMO6UQiaXCoyMZCyIHYfchCTm/e3J+EvzQ4A0VxXcbhFjC9s8EU7amIsWZntcP8oUTnGFxn/mhHkXBumw7sD4WkNFaak+x5nGG/+BNIekozn8VxFh+b9Bo6nPnG17carTfjqp5WE6++jHG1pQMF5nm63ANzMgQHgOLnkPR8m1rG8DPhaYTKHsJBFzyU4w0xxhaWsfNWc8VKrnrIn6oLlETyD3F1/z7qp34HM43Z7TN/SiHmfvjSdhbfUPNBWgnFXE6msTI5bng0OebwDwkMHv2sDe2itkjM2G0WAtMm2RYu33kNIW/jtSU47+gHWz4FyLBqqOcvvYkBZuzBl2XZLdjn3Pla91l52D1d7mTik7FttLuWz4EXR28idRr8iLZ5oAl8oL4kbhboFD/8UtC6utGXlwEIKUwiZYJmfUpDxyFHP4tjJaNN1XHn9GYj98lGJg8zshyTdLWiilpz2JSyk9Xz5HrfdHWFTPw3fL+b5sd6rbyfIANRKRb7SdqHVVkD1qvceCN6Jd/49vKxBtbGThEyU78ijs60cxmkYpE9Bj0UOAPD71+vD5tonORQP2aPE=
-  on:
-    tags: true
-    repo: kellyselden/fs-move
+jobs:
+  include:
+  - if: branch = master AND type = pull_request
+    name: ember-cli-update
+    script:
+    - git checkout $TRAVIS_PULL_REQUEST_SHA
+    - git checkout -B $TRAVIS_PULL_REQUEST_BRANCH
+    - git remote set-url origin https://$GITHUB_TOKEN@github.com/$TRAVIS_PULL_REQUEST_SLUG.git
+    - npx https://github.com/kellyselden/ember-cli-update-action.git#semver:^1.3.11 --pull-request-url https://api.github.com/repos/$TRAVIS_REPO_SLUG/pulls/$TRAVIS_PULL_REQUEST --autofix-command "npm run lint -- --fix"
+  - if: tag IS present
+    name: deploy
+    install: ignore
+    script: ignore
+    deploy:
+      provider: npm
+      email: kellyselden@gmail.com
+      api_key: $NPM_TOKEN
+      edge: true # opt in to dpl v2
+      on:
+        tags: true
+        repo: kellyselden/fs-move
