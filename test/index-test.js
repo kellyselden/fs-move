@@ -47,15 +47,12 @@ async function fixturifyRead(dir) {
 }
 
 describe(function() {
-  let sandbox;
   let actualSrcTmpDir;
   let actualDestTmpDir;
   let expectedSrcTmpDir;
   let expectedDestTmpDir;
 
   beforeEach(async function() {
-    sandbox = sinon.createSandbox();
-
     actualSrcTmpDir = await tmpDir();
     actualDestTmpDir = await tmpDir();
     expectedSrcTmpDir = await tmpDir();
@@ -88,7 +85,7 @@ describe(function() {
   }
 
   afterEach(function() {
-    sandbox.restore();
+    sinon.restore();
   });
 
   for (let {
@@ -224,7 +221,7 @@ describe(function() {
               {
                 name: 'broken rename',
                 beforeTest() {
-                  sandbox.stub(fs, 'rename').callsArgWith(2, { code: 'EXDEV' });
+                  sinon.stub(fs, 'rename').callsArgWith(2, { code: 'EXDEV' });
 
                   return Promise.resolve();
                 }
