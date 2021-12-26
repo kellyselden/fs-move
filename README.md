@@ -1,7 +1,6 @@
 # fs-move
 
 [![npm version](https://badge.fury.io/js/fs-move.svg)](https://badge.fury.io/js/fs-move)
-[![Build Status](https://travis-ci.org/kellyselden/fs-move.svg?branch=master)](https://travis-ci.org/kellyselden/fs-move)
 
 Move directory with options
 
