@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { promisify } = require('util');
-const rimraf = promisify(require('rimraf'));
+const { rimraf } = require('rimraf');
 const cpr = promisify(require('cpr'));
 const lstat = promisify(fs.lstat);
 const readdir = promisify(fs.readdir);
