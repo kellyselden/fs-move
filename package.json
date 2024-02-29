@@ -51,6 +51,6 @@
     "renovate-config-standard": "2.1.2",
     "sinon": "^17.0.0",
     "standard-node-template": "6.0.0",
-    "tmp": "0.2.1"
+    "tmp": "0.2.3"
   }
 }
