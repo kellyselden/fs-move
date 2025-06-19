@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/kellyselden/fs-move#readme",
   "engines": {
-    "node": ">=18.12"
+    "node": ">=20.9"
   },
   "dependencies": {
     "cpr": "^3.0.1",
