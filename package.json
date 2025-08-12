@@ -35,7 +35,7 @@
     "rimraf": "^6.0.0"
   },
   "devDependencies": {
-    "@kellyselden/node-template": "6.4.0",
+    "@kellyselden/node-template": "6.5.1",
     "chai": "^4.5.0",
     "chai-as-promised": "^7.1.1",
     "eslint": "^8.57.1",
