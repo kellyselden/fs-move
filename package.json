@@ -37,7 +37,7 @@
   "devDependencies": {
     "@kellyselden/node-template": "6.8.4",
     "chai": "^4.5.0",
-    "chai-as-promised": "^7.1.1",
+    "chai-as-promised": "^8.0.0",
     "eslint": "^9.34.0",
     "eslint-config-sane-node": "^5.0.0",
     "eslint-plugin-mocha": "^10.5.0",
