@@ -28,7 +28,7 @@ async function symlink(dir) {
 
   await _symlink(
     path.normalize('./symlink-src.txt'),
-    path.join(dir, 'symlink-dest.txt')
+    path.join(dir, 'symlink-dest.txt'),
   );
 }
 
@@ -40,7 +40,7 @@ async function fixturifyRead(dir) {
   let obj;
   try {
     obj = fixturify.readSync(dir);
-  } catch (err) {
+  } catch {
     obj = null;
   }
   return await Promise.resolve(obj);
@@ -90,17 +90,17 @@ describe(function() {
 
   for (let {
     name,
-    test
+    test,
   } of
     [
       {
         name: 'promise',
-        test: testPromise
+        test: testPromise,
       },
       {
         name: 'callback',
-        test: testCallback
-      }
+        test: testCallback,
+      },
     ]
   ) {
     describe(name, function() {
@@ -130,7 +130,7 @@ describe(function() {
           filter(src, dest) {
             return path.basename(src) !== 'both.txt'
               && path.basename(dest) !== 'both.txt';
-          }
+          },
         });
 
         await assert();
@@ -139,62 +139,62 @@ describe(function() {
       for (let {
         name,
         options,
-        fixtures
+        fixtures,
       } of
         [
           {
             name: 'overwrite',
             options: {
-              overwrite: true
+              overwrite: true,
             },
             fixtures: [
               'file-to-folder-overwrite',
-              'folder-to-file-overwrite'
-            ]
+              'folder-to-file-overwrite',
+            ],
           },
           {
             name: 'merge',
             options: {
-              merge: true
+              merge: true,
             },
             fixtures: [
               'file-to-folder-merge',
-              'folder-to-file-merge'
-            ]
+              'folder-to-file-merge',
+            ],
           },
           {
             name: 'merge-and-overwrite',
             options: {
               merge: true,
-              overwrite: true
+              overwrite: true,
             },
             fixtures: [
               'file-to-folder-merge-and-overwrite',
-              'folder-to-file-merge-and-overwrite'
-            ]
+              'folder-to-file-merge-and-overwrite',
+            ],
           },
           {
             name: 'merge-and-purge',
             options: {
               merge: true,
-              purge: true
+              purge: true,
             },
             fixtures: [
               'file-to-folder-merge-and-purge',
-              'folder-to-file-merge-and-purge'
-            ]
-          }
+              'folder-to-file-merge-and-purge',
+            ],
+          },
         ]
       ) {
         describe(name, function() {
           for (let {
             name: _name,
             beforeTest = () => Promise.resolve(),
-            afterTest = () => Promise.resolve()
+            afterTest = () => Promise.resolve(),
           } of
             [
               {
-                name: 'default'
+                name: 'default',
               },
               {
                 name: 'symlink',
@@ -203,7 +203,7 @@ describe(function() {
                 },
                 async afterTest() {
                   await symlink(expectedDestTmpDir);
-                }
+                },
               },
               {
                 name: 'broken symlink',
@@ -216,7 +216,7 @@ describe(function() {
                   await symlink(expectedDestTmpDir);
 
                   await breakSymlink(expectedDestTmpDir);
-                }
+                },
               },
               {
                 name: 'broken rename',
@@ -224,8 +224,8 @@ describe(function() {
                   sinon.stub(fs, 'rename').callsArgWith(2, { code: 'EXDEV' });
 
                   return Promise.resolve();
-                }
-              }
+                },
+              },
             ]
           ) {
             it(_name, async function() {

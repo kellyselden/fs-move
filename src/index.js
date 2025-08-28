@@ -20,7 +20,7 @@ async function move(src, dest, options = {}, callback) {
       overwrite,
       merge,
       purge,
-      filter = () => true
+      filter = () => true,
     } = options;
 
     if (!await Promise.resolve(filter(src, dest))) {
@@ -31,7 +31,7 @@ async function move(src, dest, options = {}, callback) {
 
     try {
       destStats = await lstat(dest);
-    } catch (err) {}
+    } catch {}
 
     if (destStats && !overwrite && !merge) {
       throw new Error('Destination directory already exists');
@@ -68,7 +68,7 @@ async function move(src, dest, options = {}, callback) {
         await move(
           path.join(src, file),
           path.join(dest, file),
-          options
+          options,
         );
       }
     }
@@ -80,7 +80,7 @@ async function move(src, dest, options = {}, callback) {
     } else {
       try {
         await rmdir(src);
-      } catch (err) {}
+      } catch {}
     }
 
     if (callback) {
