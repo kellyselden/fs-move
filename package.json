@@ -42,7 +42,7 @@
     "mocha-helpers": "^11.0.0",
     "sinon": "^21.0.0",
     "standard-node-template": "8.0.0",
-    "tmp": "0.2.5"
+    "tmp": "0.2.7"
   },
   "engines": {
     "node": ">=22.11"
